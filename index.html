@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Find Tom</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body {max-width: 800px;}
+    </style>
+  </head>
+  <body>
+    <div id="content"></div>
+    <script type="text/babel">
+      var GOOGLE_API_KEY = 'AIzaSyA5MT_w7rT7G5QTs_7o7at4_o6a7u2oGpc';
+      var CALENDAR_ID = 'rc0dk12tq77tvfv49le0p5mro8@group.calendar.google.com';
+
+      var DestinationsList = React.createClass({
+        getInitialState: function() {
+          return {
+            destinations: []
+          };
+        },
+        componentDidMount: function() {
+          $.get(encodeURI('https://www.googleapis.com/calendar/v3/calendars/' + CALENDAR_ID + '/events?key=' + GOOGLE_API_KEY), function (response) {
+              if (response.items) {
+                this.setState({ destinations: response.items });
+              }
+            }.bind(this)
+          );
+        },
+        render: function() {
+          return (
+            <table className="table table-striped table-condensed">
+              <thead><tr><th>Location</th><th>Start</th><th>End</th><th>Days</th></tr></thead>
+              <tbody>
+                {
+                  this.state.destinations
+                    .sort(function(a, b) { return a.start.date.localeCompare(b.start.date); })
+                    .map(function(dest, index) {
+                      return (
+                        <tr key={index}>
+                          <td>{dest.summary}</td>
+                          <td>{moment(dest.start.date, 'YYYY-MM-DD').format('MM/DD/YYYY')}</td>
+                          <td>{moment(dest.end.date, 'YYYY-MM-DD').format('MM/DD/YYYY')}</td>
+                          <td>{moment(dest.end.date, 'YYYY-MM-DD').diff(moment(dest.start.date, 'YYYY-MM-DD'), 'days')}</td>
+                        </tr>
+                      )
+                    })
+                }
+              </tbody>
+            </table>
+          )
+        }
+      });
+
+      ReactDOM.render(
+        <DestinationsList />,
+        document.getElementById('content')
+      );
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.4/react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.4/react-dom.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/moment.min.js"></script>
+  </body>
+</html>
