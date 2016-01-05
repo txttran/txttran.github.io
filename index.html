@@ -79,6 +79,7 @@
           return {
             infoWindow: null,
             marker: null,
+            location: null
           };
         },
         dropPin: function(location) {
@@ -106,6 +107,7 @@
             openedInfoWindow.close();
           }
           this.state.infoWindow.open(map, this.state.marker);
+          map.setCenter(this.state.location);
           openedInfoWindow = this.state.infoWindow;
         },
         closeInfoWindow: function() {
@@ -120,17 +122,19 @@
           var location = window.localStorage.getItem(this.props.destination.location);
           if (location) {
             this.dropPin(JSON.parse(location));
+            this.setState({ location: JSON.parse(location) });
           } else {
             setTimeout(function() {
               geocoder.geocode({'address': this.props.destination.location}, function(results, status) {
                 if (status == google.maps.GeocoderStatus.OK) {
                   this.dropPin(results[0].geometry.location);
                   window.localStorage.setItem(this.props.destination.location, JSON.stringify(results[0].geometry.location));
+                  this.setState({ location: results[0].geometry.location });
                 } else {
                   console.log(status);
                 }
               }.bind(this))
-            }.bind(this), 600 * i);
+            }.bind(this), 600 * this.props.idx);
           }
         },
         render: function() {
