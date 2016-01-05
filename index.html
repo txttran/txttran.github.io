@@ -45,8 +45,8 @@
                     .map(function(dest, i) {
                       return {
                         name: dest.summary,
-                        start: moment(dest.start.date, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-                        end: moment(dest.end.date, 'YYYY-MM-DD').subtract(1, 'days').format('MM/DD/YYYY'),
+                        start: moment(dest.start.date, 'YYYY-MM-DD').format('M/D'),
+                        end: moment(dest.end.date, 'YYYY-MM-DD').subtract(1, 'days').format('M/D'),
                         duration: moment(dest.end.date, 'YYYY-MM-DD').subtract(1, 'days').diff(moment(dest.start.date, 'YYYY-MM-DD'), 'days'),
                         location: dest.location || ''
                       };
@@ -59,7 +59,7 @@
         render: function() {
           return (
             <table className="table table-hover table-condensed">
-              <thead><tr><th>Location</th><th>Start</th><th>End</th><th>Days</th></tr></thead>
+              <thead><tr><th>Location</th><th>Dates</th><th>Days</th></tr></thead>
               <tbody>
                 {
                   this.state.destinations
@@ -87,7 +87,7 @@
         dropPin: function(location) {
           var contentString = '<div>'+
                                 '<h5>' + this.props.destination.name + '</h5>'+
-                                '<p>' + this.props.destination.start + ' - ' + this.props.destination.end + '</p>' +
+                                '<p>' + this.props.destination.start + ' - ' + this.props.destination.end + ', ' + this.props.destination.duration + ' days.</p>' +
                               '</div>';
 
           var marker = new google.maps.Marker({
@@ -143,8 +143,7 @@
           return (
             <tr onClick={this.handleClick}>
               <td>{this.props.destination.name}</td>
-              <td>{this.props.destination.start}</td>
-              <td>{this.props.destination.end}</td>
+              <td>{this.props.destination.start} - {this.props.destination.end}</td>
               <td>{this.props.destination.duration}</td>
             </tr>
           )
