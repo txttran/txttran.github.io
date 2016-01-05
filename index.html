@@ -26,33 +26,13 @@
 
       var map = null;
       var geocoder = null;
+      var openedInfoWindow = null;
 
       var DestinationsList = React.createClass({
         getInitialState: function() {
           return {
             destinations: []
           };
-        },
-        dropPin: function(dest, location) {
-          var contentString = '<div>'+
-                                '<h3>' + dest.summary + '</h3>'+
-                                '<p>' + moment(dest.start.date, 'YYYY-MM-DD').format('MM/DD/YYYY') + ' - ' + moment(dest.end.date, 'YYYY-MM-DD').subtract(1, 'days').format('MM/DD/YYYY') +'</p>' +
-                              '</div>';
-
-          var marker = new google.maps.Marker({
-              map: map,
-              position: location,
-              title: dest.summary,
-              animation: google.maps.Animation.DROP
-          });
-
-          var infowindow = new google.maps.InfoWindow({
-            content: contentString
-          });
-
-          marker.addListener('click', function() {
-            infowindow.open(map, marker);
-          });
         },
         componentDidMount: function() {
           $.get(encodeURI('https://www.googleapis.com/calendar/v3/calendars/' + CALENDAR_ID + '/events?key=' + GOOGLE_API_KEY), function (response) {
@@ -61,22 +41,6 @@
                   destinations: response.items
                     .sort(function(a, b) { return a.start.date.localeCompare(b.start.date); })
                     .map(function(dest, i) {
-                      var location = window.localStorage.getItem(dest.location);
-                      if (location) {
-                        this.dropPin(dest, JSON.parse(location));
-                      } else {
-                        setTimeout(function() {
-                          geocoder.geocode({'address': dest.location}, function(results, status) {
-                            if (status == google.maps.GeocoderStatus.OK) {
-                              this.dropPin(dest, results[0].geometry.location);
-                              window.localStorage.setItem(dest.location, JSON.stringify(results[0].geometry.location));
-                            } else {
-                              console.log(status);
-                            }
-                          }.bind(this))
-                        }.bind(this), 600 * i);
-                      }
-
                       return {
                         name: dest.summary,
                         start: moment(dest.start.date, 'YYYY-MM-DD').format('MM/DD/YYYY'),
@@ -111,10 +75,63 @@
         propTypes: {
           destination: React.PropTypes.object.isRequired
         },
+        getInitialState: function() {
+          return {
+            infoWindow: null,
+            marker: null,
+          };
+        },
+        dropPin: function(location) {
+          var contentString = '<div>'+
+                                '<h5>' + this.props.destination.name + '</h5>'+
+                                '<p>' + this.props.destination.start + ' - ' + this.props.destination.end + '</p>' +
+                              '</div>';
+
+          var marker = new google.maps.Marker({
+            map: map,
+            position: location,
+            title: this.props.destination.name,
+            animation: google.maps.Animation.DROP
+          });
+
+          this.setState({
+            marker: marker,
+            infoWindow: new google.maps.InfoWindow({ content: contentString })
+          });
+
+          marker.addListener('click', this.openInfoWindow);
+        },
+        openInfoWindow: function() {
+          if (openedInfoWindow) {
+            openedInfoWindow.close();
+          }
+          this.state.infoWindow.open(map, this.state.marker);
+          openedInfoWindow = this.state.infoWindow;
+        },
+        closeInfoWindow: function() {
+          this.state.infoWindow.close();
+        },
         handleClick: function(e) {
           e.preventDefault();
 
-          console.log(this.props.destination);
+          this.openInfoWindow();
+        },
+        componentDidMount: function() {
+          var location = window.localStorage.getItem(this.props.destination.location);
+          if (location) {
+            this.dropPin(JSON.parse(location));
+          } else {
+            setTimeout(function() {
+              geocoder.geocode({'address': this.props.destination.location}, function(results, status) {
+                if (status == google.maps.GeocoderStatus.OK) {
+                  this.dropPin(results[0].geometry.location);
+                  window.localStorage.setItem(this.props.destination.location, JSON.stringify(results[0].geometry.location));
+                } else {
+                  console.log(status);
+                }
+              }.bind(this))
+            }.bind(this), 600 * i);
+          }
         },
         render: function() {
           return (
@@ -128,19 +145,20 @@
         }
       });
 
-      ReactDOM.render(
-        <DestinationsList />,
-        document.getElementById('content')
-      );
-
       window.init = function() {
         map = new google.maps.Map(document.getElementById('map'), {
           scrollwheel: false,
           zoom: 2,
-          center: {lat: 10, lng: 14}
+          center: {lat: 10, lng: 12},
+          mapTypeControl: false
         });
 
         geocoder = new google.maps.Geocoder();
+
+        ReactDOM.render(
+          <DestinationsList />,
+          document.getElementById('content')
+        );
       };
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.4/react.js"></script>
