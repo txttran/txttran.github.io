@@ -17,7 +17,7 @@
     </style>
   </head>
   <body>
-    <!-- <div id="map"></div> -->
+    <div id="map"></div>
     <div id="content"></div>
 
     <script type="text/babel">
@@ -33,6 +33,27 @@
             destinations: []
           };
         },
+        dropPin: function(dest, location) {
+          var contentString = '<div>'+
+                                '<h3>' + dest.summary + '</h3>'+
+                                '<p>' + moment(dest.start.date, 'YYYY-MM-DD').format('MM/DD/YYYY') + ' - ' + moment(dest.end.date, 'YYYY-MM-DD').subtract(1, 'days').format('MM/DD/YYYY') +'</p>' +
+                              '</div>';
+
+          var marker = new google.maps.Marker({
+              map: map,
+              position: location,
+              title: dest.summary,
+              animation: google.maps.Animation.DROP
+          });
+
+          var infowindow = new google.maps.InfoWindow({
+            content: contentString
+          });
+
+          marker.addListener('click', function() {
+            infowindow.open(map, marker);
+          });
+        },
         componentDidMount: function() {
           $.get(encodeURI('https://www.googleapis.com/calendar/v3/calendars/' + CALENDAR_ID + '/events?key=' + GOOGLE_API_KEY), function (response) {
               if (response.items) {
@@ -40,34 +61,21 @@
                   destinations: response.items
                     .sort(function(a, b) { return a.start.date.localeCompare(b.start.date); })
                     .map(function(dest, i) {
-                      /*
-                      setTimeout(function() {
-                        geocoder.geocode({'address': dest.location}, function(results, status) {
-                          if (status == google.maps.GeocoderStatus.OK) {
-                            var contentString = '<div>'+
-                              '<h3>' + dest.summary + '</h3>'+
-                              '<p>' + dest.start.date + ' - ' + dest.end.date +'</p>' +
-                            '</div>';
-
-                            var marker = new google.maps.Marker({
-                                map: map,
-                                position: results[0].geometry.location,
-                                title: dest.summary
-                            });
-
-                            var infowindow = new google.maps.InfoWindow({
-                              content: contentString
-                            });
-
-                            marker.addListener('click', function() {
-                              infowindow.open(map, marker);
-                            });
-                          } else {
-                            console.log(status);
-                          }
-                        })
-                      }, 600 * i);
-                      */
+                      var location = window.localStorage.getItem(dest.location);
+                      if (location) {
+                        this.dropPin(dest, JSON.parse(location));
+                      } else {
+                        setTimeout(function() {
+                          geocoder.geocode({'address': dest.location}, function(results, status) {
+                            if (status == google.maps.GeocoderStatus.OK) {
+                              this.dropPin(dest, results[0].geometry.location);
+                              window.localStorage.setItem(dest.location, JSON.stringify(results[0].geometry.location));
+                            } else {
+                              console.log(status);
+                            }
+                          }.bind(this))
+                        }.bind(this), 600 * i);
+                      }
 
                       return {
                         name: dest.summary,
@@ -76,7 +84,7 @@
                         duration: moment(dest.end.date, 'YYYY-MM-DD').subtract(1, 'days').diff(moment(dest.start.date, 'YYYY-MM-DD'), 'days'),
                         location: dest.location || ''
                       };
-                    })
+                    }.bind(this))
                 });
               }
             }.bind(this)
@@ -140,6 +148,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/moment.min.js"></script>
-    <!-- <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA5MT_w7rT7G5QTs_7o7at4_o6a7u2oGpc&callback=init"></script> -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA5MT_w7rT7G5QTs_7o7at4_o6a7u2oGpc&callback=init"></script>
   </body>
 </html>
