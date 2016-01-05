@@ -72,8 +72,8 @@
                       return {
                         name: dest.summary,
                         start: moment(dest.start.date, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-                        end: moment(dest.end.date, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-                        duration: moment(dest.end.date, 'YYYY-MM-DD').diff(moment(dest.start.date, 'YYYY-MM-DD'), 'days'),
+                        end: moment(dest.end.date, 'YYYY-MM-DD').subtract(1, 'days').format('MM/DD/YYYY'),
+                        duration: moment(dest.end.date, 'YYYY-MM-DD').subtract(1, 'days').diff(moment(dest.start.date, 'YYYY-MM-DD'), 'days'),
                         location: dest.location || ''
                       };
                     })
