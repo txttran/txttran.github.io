@@ -43,12 +43,22 @@
                   destinations: response.items
                     .sort(function(a, b) { return a.start.date.localeCompare(b.start.date); })
                     .map(function(dest, i) {
+                      var room = false, flight: false;
+
+                      if (dest.description && dest.description.length) {
+                        var metadata = JSON.parse(dest.description);
+                        room = metadata.room;
+                        flight = metadata.flight;
+                      }
+
                       return {
                         name: dest.summary,
                         start: moment(dest.start.date, 'YYYY-MM-DD').format('M/D'),
                         end: moment(dest.end.date, 'YYYY-MM-DD').subtract(1, 'days').format('M/D'),
                         duration: moment(dest.end.date, 'YYYY-MM-DD').subtract(1, 'days').diff(moment(dest.start.date, 'YYYY-MM-DD'), 'days'),
-                        location: dest.location || ''
+                        location: dest.location || '',
+                        room: room,
+                        flight: flight
                       };
                     }.bind(this))
                 });
@@ -59,7 +69,15 @@
         render: function() {
           return (
             <table className="table table-hover table-condensed">
-              <thead><tr><th>Location</th><th>Dates</th><th>Days</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Location</th>
+                  <th>Dates</th>
+                  <th>Days</th>
+                  <th><span className="glyphicon glyphicon-plane"></span></th>
+                  <th><span className="glyphicon glyphicon-home"></span></th>
+                </tr>
+              </thead>
               <tbody>
                 {
                   this.state.destinations
@@ -145,6 +163,8 @@
               <td>{this.props.destination.name}</td>
               <td>{this.props.destination.start} - {this.props.destination.end}</td>
               <td>{this.props.destination.duration}</td>
+              <td>{this.props.destination.flight ? <span className="glyphicon glyphicon-ok text-success"></span> : ''}</td>
+              <td>{this.props.destination.room ? <span className="glyphicon glyphicon-ok text-success"></span> : ''}</td>
             </tr>
           )
         }
